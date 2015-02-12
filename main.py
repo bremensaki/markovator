@@ -4,6 +4,7 @@ from markovate import Markovator
 
 import twitter_settings
 import random
+from HTMLParser import HTMLParser
 
 
 def create_markovated_tweet(tweets, max_length, unwanted_markovations=[]):
@@ -125,7 +126,7 @@ def produce_next_tweet(app_status, query=''):
         query_is_hashtag = True
 
     recent_tweets = twitter.get_tweets(twitter_settings.screen_name, True)
-    best_tweet = create_markovated_tweet(tweets, tweet_length, map(lambda t: t['text'].strip(), recent_tweets))
+    best_tweet = HTMLParser().unescape(create_markovated_tweet(tweets, tweet_length, map(lambda t: t['text'].strip(), recent_tweets)))
 
     # Try to avoid tweets that are just hashtags
     for word in best_tweet.split():
