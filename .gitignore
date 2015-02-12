@@ -1,4 +1,4 @@
 *.pyc
 *~
 twitter_settings.py
-
+status.json

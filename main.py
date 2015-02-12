@@ -44,7 +44,7 @@ def filter_out_bad_words(tweets):
 
 def reply_to_user(user, app_status):
     if user['protected']:
-        print("@" + user['screen_name'] + " sorry, I can't process protected users :(")
+        print("@" + user['screen_name'] + " if your tweets weren't protected I'd be able to say something constructive")
         return
 
     screen_name = user['screen_name']
@@ -55,12 +55,12 @@ def reply_to_user(user, app_status):
 
     if len(tweets) <= 1:
         print("Not enough tweets")
-        fail_reply = "@" + screen_name + " sorry, you need to tweet more (or tweet less @ mentions and links) :("
+        fail_reply = "@" + screen_name + " you don't say much, do you?"
         twitter.post_tweet(fail_reply)
         app_status['latest_reply'] = fail_reply
         return
 
-    tweet_prefix = '@' + screen_name + ' markovated: '
+    tweet_prefix = '@' + screen_name
     ideal_tweet_length = 140 - len(tweet_prefix)
     
     best_tweet = create_markovated_tweet(tweets, ideal_tweet_length)
@@ -126,7 +126,6 @@ def produce_next_tweet(app_status):
 
 print("Started")
 process_replies()
-if random.randrange(240) == 0:
+if random.randrange(100) < twitter_settings.tweet_chance:
     produce_next_tweet(status)
 print("Finished")
-
