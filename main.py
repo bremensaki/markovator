@@ -127,8 +127,8 @@ def produce_next_tweet(app_status, query=''):
     best_tweet = create_markovated_tweet(tweets, tweet_length, map(lambda t: t['text'].strip(), recent_tweets))
 
     if best_tweet != None:
-        if query_is_hashtag and query not in best_tweet:
-            best_tweet += ' ' + query # only add hashtag if not present
+        if query_is_hashtag and query.lower() not in best_tweet.lower():
+            best_tweet += ' ' + query  # only add hashtag if not present
         twitter.post_tweet(best_tweet)
         encoded = unicode(best_tweet).encode('utf-8')
         print(encoded + '(' + str(len(encoded)) + ')')
