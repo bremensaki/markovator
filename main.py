@@ -26,7 +26,7 @@ def create_markovated_tweet(tweets, max_length, unwanted_markovations=[]):
 
 
 def filter_tweets(tweets):
-    return filter_out_mentions(filter_out_links(filter_out_bad_words(tweets)))
+    return filter_out_mentions(filter_out_links(tweets))
 
 
 def filter_out_mentions(tweets):
@@ -36,7 +36,8 @@ def filter_out_mentions(tweets):
 
 def filter_out_links(tweets):
     # Links are almost guaranteed to ruin the context of the markovation
-    return filter(lambda t: not 'http://' in t['text'].lower(), tweets)
+    return filter(lambda t: not ('http://' in t['text'].lower() or
+                                 'https://' in t['text'].lower()), tweets)
 
 
 def filter_out_bad_words(tweets):
