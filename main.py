@@ -105,6 +105,7 @@ def process_replies():
 def produce_next_tweet(app_status, query=''):
     app_status = status.load()
     tweet_length = 140
+    word_count = 0
     query_is_hashtag = False
 
     if query == '':
@@ -126,7 +127,12 @@ def produce_next_tweet(app_status, query=''):
     recent_tweets = twitter.get_tweets(twitter_settings.screen_name, True)
     best_tweet = create_markovated_tweet(tweets, tweet_length, map(lambda t: t['text'].strip(), recent_tweets))
 
-    if best_tweet != None:
+    # Try to avoid tweets that are just hashtags
+    for word in best_tweet.split():
+        if word.startswith != '#':
+            word_count += 1
+
+    if best_tweet != None and word_count > 0:
         if query_is_hashtag and query.lower() not in best_tweet.lower():
             best_tweet += ' ' + query  # only add hashtag if not present
         twitter.post_tweet(best_tweet)
