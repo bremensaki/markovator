@@ -65,7 +65,7 @@ def reply_to_user(user, app_status):
         app_status['latest_reply'] = fail_reply
         return
 
-    tweet_prefix = '@' + screen_name
+    tweet_prefix = '@' + screen_name + ' '
     ideal_tweet_length = 140 - len(tweet_prefix)
 
     best_tweet = create_markovated_tweet(tweets, ideal_tweet_length)
