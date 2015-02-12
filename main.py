@@ -129,7 +129,7 @@ def produce_next_tweet(app_status, query=''):
 
     # Try to avoid tweets that are just hashtags
     for word in best_tweet.split():
-        if word.startswith != '#':
+        if not word.startswith('#'):
             word_count += 1
 
     if best_tweet != None and word_count > 0:
