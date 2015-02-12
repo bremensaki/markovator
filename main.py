@@ -1,12 +1,10 @@
-import json
-
 import twitter
 import file_system_status as status
 from markovate import Markovator
 
 import twitter_settings
-import sys
 import random
+
 
 def create_markovated_tweet(tweets, max_length, unwanted_markovations=[]):
     tweets_texts = map(lambda t: t['text'].strip(), tweets)
@@ -25,22 +23,27 @@ def create_markovated_tweet(tweets, max_length, unwanted_markovations=[]):
 
     return markovation
 
+
 def filter_tweets(tweets):
     return filter_out_mentions(filter_out_links(filter_out_bad_words(tweets)))
 
+
 def filter_out_mentions(tweets):
     # TODO This is to be polite, we could keep tweets that mention people that follow us
-    return filter(lambda t:not '@' in t['text'], tweets)
+    return filter(lambda t: not '@' in t['text'], tweets)
+
 
 def filter_out_links(tweets):
     # Links are almost guaranteed to ruin the context of the markovation
-    return filter(lambda t:not 'http://' in t['text'].lower(), tweets)
+    return filter(lambda t: not 'http://' in t['text'].lower(), tweets)
+
 
 def filter_out_bad_words(tweets):
     # Might be offensive/inappropriate for humour
-    return filter(lambda t:not ('cancer' in t['text'].lower() or
-                                'r.i.p' in t['text'].lower() or
-                                'RIP' in t['text']), tweets)
+    return filter(lambda t: not ('cancer' in t['text'].lower() or
+                                 'r.i.p' in t['text'].lower() or
+                                 'RIP' in t['text']), tweets)
+
 
 def reply_to_user(user, app_status):
     if user['protected']:
@@ -62,9 +65,9 @@ def reply_to_user(user, app_status):
 
     tweet_prefix = '@' + screen_name
     ideal_tweet_length = 140 - len(tweet_prefix)
-    
+
     best_tweet = create_markovated_tweet(tweets, ideal_tweet_length)
-    
+
     if best_tweet != None:
         tweet = tweet_prefix + best_tweet
         twitter.post_tweet(tweet)
@@ -75,6 +78,7 @@ def reply_to_user(user, app_status):
         print('<p>Could not generate reply</p>')
         app_status['latest_reply'] = 'Could not generate'
 
+
 def process_replies():
     app_status = status.load()
     since_id = app_status.get('reply_since_id', -1)
@@ -84,7 +88,7 @@ def process_replies():
     else:
         mentions = twitter.get_mentions()
 
-    print(str(len(mentions))+" mentions since "+str(since_id))
+    print(str(len(mentions)) + " mentions since " + str(since_id))
 
     mentions.reverse()
     for mention in mentions:
@@ -97,35 +101,47 @@ def process_replies():
         # Save after each one so if we crash we don't resend replies
         status.save(app_status)
 
-def produce_next_tweet(app_status):
+
+def produce_next_tweet(app_status, query=''):
     app_status = status.load()
-    # Just get the latest tweets
-    tweets = twitter.get_timeline_tweets(800)
+    tweet_length = 140
+    query_is_hashtag = False
+
+    if query == '':
+        tweets = twitter.get_timeline_tweets(800)
+    else:
+        tweets = twitter.get_search_tweets(800, query)['statuses']
+
     tweets = filter_tweets(tweets)
-    tweets = filter(lambda t:not t['user']['screen_name'] == twitter_settings.screen_name, tweets)
 
     if len(tweets) <= 1:
         print('Could not generate tweet (not enough eligible tweets)')
         app_status['latest_tweet'] = 'Could not generate tweet (not enough eligible tweets)'
         return
 
-    recent_tweets = twitter.get_tweets(twitter_settings.screen_name, True)
+    if query.startswith('#'):
+        tweet_length -= len(query)
+        query_is_hashtag = True
 
-    best_tweet = create_markovated_tweet(tweets, 140, map(lambda t: t['text'].strip(), recent_tweets))
+    recent_tweets = twitter.get_tweets(twitter_settings.screen_name, True)
+    best_tweet = create_markovated_tweet(tweets, tweet_length, map(lambda t: t['text'].strip(), recent_tweets))
 
     if best_tweet != None:
+        if query_is_hashtag and query not in best_tweet:
+            best_tweet += ' ' + query # only add hashtag if not present
         twitter.post_tweet(best_tweet)
         encoded = unicode(best_tweet).encode('utf-8')
         print(encoded + '(' + str(len(encoded)) + ')')
-        app_status['latest_tweet'] =  encoded;
+        app_status['latest_tweet'] = encoded
     else:
         print('Could not generate tweet')
         app_status['latest_tweet'] = 'Could not generate tweet'
 
     status.save(app_status)
 
+
 print("Started")
 process_replies()
 if random.randrange(100) < twitter_settings.tweet_chance:
-    produce_next_tweet(status)
+    produce_next_tweet(status, twitter_settings.search_key)
 print("Finished")

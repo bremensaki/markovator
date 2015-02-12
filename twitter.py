@@ -1,5 +1,3 @@
-import logging
-import time
 import json
 
 import oauth2 as oauth
@@ -58,7 +56,7 @@ def get_timeline_tweets(count):
 def get_search_tweets(count, query):
     client = oauth.Client(twitter_settings.consumer, twitter_settings.token)
 
-    resp, content = client.request('https://api.twitter.com/1.1/search/tweets.json?q=' + urllib.quote(query) + '&count=' + str(count) + '&trim_user=true', "GET")
+    resp, content = client.request('https://api.twitter.com/1.1/search/tweets.json?q=' + urllib.quote(query) + '&count=' + str(count), "GET")
 
     if resp.status != 200:
         raise TwitterError(resp.status, content)
