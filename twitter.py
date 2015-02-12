@@ -55,6 +55,16 @@ def get_timeline_tweets(count):
     
     return json.loads(content)
 
+def get_search_tweets(count, query):
+    client = oauth.Client(twitter_settings.consumer, twitter_settings.token)
+
+    resp, content = client.request('https://api.twitter.com/1.1/search/tweets.json?q=' + urllib.quote(query) + '&count=' + str(count) + '&trim_user=true', "GET")
+
+    if resp.status != 200:
+        raise TwitterError(resp.status, content)
+
+    return json.loads(content)
+
 def get_timeline_tweets_since(since_id=-1):
     client = oauth.Client(twitter_settings.consumer, twitter_settings.token)
     tweets = []
