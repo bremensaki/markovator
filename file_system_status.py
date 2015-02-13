@@ -1,4 +1,3 @@
-import logging
 import json
 
 LOCATION = "status.json"
@@ -22,5 +21,3 @@ def save(app_status):
     f = open(LOCATION, 'w')
     f.write(json.dumps(app_status))
     f.close()
-
-

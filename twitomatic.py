@@ -61,7 +61,8 @@ def reply_to_user(user, app_status):
     if len(tweets) <= 1:
         print("Not enough tweets")
         fail_reply = "@" + screen_name + " you don't say much, do you?"
-        twitter.post_tweet(fail_reply)
+        if twitter_settings.post_replies:
+            twitter.post_tweet(fail_reply)
         app_status['latest_reply'] = fail_reply
         return
 
@@ -70,9 +71,10 @@ def reply_to_user(user, app_status):
 
     best_tweet = create_markovated_tweet(tweets, ideal_tweet_length)
 
-    if best_tweet != None:
+    if best_tweet is not None:
         tweet = tweet_prefix + best_tweet
-        twitter.post_tweet(tweet)
+        if twitter_settings.post_replies:
+            twitter.post_tweet(fail_reply)
         encoded = unicode(tweet).encode('utf-8')
         print(encoded + '(' + str(len(encoded)) + ')')
         app_status['latest_reply'] = encoded
@@ -134,10 +136,11 @@ def produce_next_tweet(app_status, query=''):
         if not word.startswith('#'):
             word_count += 1
 
-    if best_tweet != None and word_count > 0:
+    if best_tweet is not None and word_count > 0:
         if query_is_hashtag and query.lower() not in best_tweet.lower():
             best_tweet += ' ' + query  # only add hashtag if not present
-        twitter.post_tweet(best_tweet)
+        if twitter_settings.post_tweets:
+            twitter.post_tweet(best_tweet)
         encoded = unicode(best_tweet).encode('utf-8')
         print(encoded + '(' + str(len(encoded)) + ')')
         app_status['latest_tweet'] = encoded
@@ -147,9 +150,9 @@ def produce_next_tweet(app_status, query=''):
 
     status.save(app_status)
 
-
-print("Started")
-process_replies()
-if random.randrange(100) < twitter_settings.tweet_chance:
-    produce_next_tweet(status, twitter_settings.search_key)
-print("Finished")
+if __name__ == "__main__":
+    print("Started")
+    process_replies()
+    if random.randrange(100) < twitter_settings.tweet_chance:
+        produce_next_tweet(status, twitter_settings.search_key)
+    print("Finished")
