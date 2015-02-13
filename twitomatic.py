@@ -2,7 +2,7 @@ import twitter
 import file_system_status as status
 from markovate import Markovator
 
-import twitter_settings
+import settings
 import random
 from HTMLParser import HTMLParser
 
@@ -47,7 +47,7 @@ def filter_out_bad_words(tweets):
                                  'RIP' in t['text']), tweets)
 
 
-def reply_to_user(user, app_status):
+def reply_to_user(client, user, app_status):
     if user['protected']:
         print("@" + user['screen_name'] + " if your tweets weren't protected I'd be able to say something constructive")
         return
@@ -56,13 +56,13 @@ def reply_to_user(user, app_status):
 
     print(screen_name)
 
-    tweets = filter_tweets(twitter.get_tweets(screen_name, True))
+    tweets = filter_tweets(twitter.get_tweets(client, screen_name))
 
     if len(tweets) <= 1:
         print("Not enough tweets")
         fail_reply = "@" + screen_name + " you don't say much, do you?"
-        if twitter_settings.post_replies:
-            twitter.post_tweet(fail_reply)
+        if settings.post_replies:
+            twitter.post_tweet(client, fail_reply)
         app_status['latest_reply'] = fail_reply
         return
 
@@ -73,8 +73,8 @@ def reply_to_user(user, app_status):
 
     if best_tweet is not None:
         tweet = tweet_prefix + best_tweet
-        if twitter_settings.post_replies:
-            twitter.post_tweet(fail_reply)
+        if settings.post_replies:
+            twitter.post_tweet(client, fail_reply)
         encoded = unicode(tweet).encode('utf-8')
         print(encoded + '(' + str(len(encoded)) + ')')
         app_status['latest_reply'] = encoded
@@ -83,21 +83,21 @@ def reply_to_user(user, app_status):
         app_status['latest_reply'] = 'Could not generate'
 
 
-def process_replies():
+def process_replies(client):
     app_status = status.load()
     since_id = app_status.get('reply_since_id', -1)
 
     if since_id:
-        mentions = twitter.get_mentions(since_id)
+        mentions = twitter.get_mentions(client, since_id)
     else:
-        mentions = twitter.get_mentions()
+        mentions = twitter.get_mentions(client)
 
     print(str(len(mentions)) + " mentions since " + str(since_id))
 
     mentions.reverse()
     for mention in mentions:
-        twitter.follow_user(mentions[-1]['user']['screen_name'])
-        reply_to_user(mention['user'], app_status)
+        twitter.follow_user(client, mentions[-1]['user']['screen_name'])
+        reply_to_user(client, mention['user'], app_status)
 
         app_status['reply_since_id'] = mention['id']
         app_status['latest_user_replied_to'] = mention['user']['screen_name']
@@ -106,16 +106,16 @@ def process_replies():
         status.save(app_status)
 
 
-def produce_next_tweet(app_status, query=''):
+def produce_next_tweet(client, app_status, query=''):
     app_status = status.load()
     tweet_length = 140
     word_count = 0
     query_is_hashtag = False
 
     if query == '':
-        tweets = twitter.get_timeline_tweets(800)
+        tweets = twitter.get_timeline_tweets(client, 800)
     else:
-        tweets = twitter.get_search_tweets(800, query)['statuses']
+        tweets = twitter.get_search_tweets(client, 800, query)['statuses']
 
     tweets = filter_tweets(tweets)
 
@@ -128,7 +128,7 @@ def produce_next_tweet(app_status, query=''):
         tweet_length -= len(query)
         query_is_hashtag = True
 
-    recent_tweets = twitter.get_tweets(twitter_settings.screen_name, True)
+    recent_tweets = twitter.get_tweets(client, settings.screen_name)
     best_tweet = HTMLParser().unescape(create_markovated_tweet(tweets, tweet_length, map(lambda t: t['text'].strip(), recent_tweets)))
 
     # Try to avoid tweets that are just hashtags
@@ -139,8 +139,8 @@ def produce_next_tweet(app_status, query=''):
     if best_tweet is not None and word_count > 0:
         if query_is_hashtag and query.lower() not in best_tweet.lower():
             best_tweet += ' ' + query  # only add hashtag if not present
-        if twitter_settings.post_tweets:
-            twitter.post_tweet(best_tweet)
+        if settings.post_tweets:
+            twitter.post_tweet(client, best_tweet)
         encoded = unicode(best_tweet).encode('utf-8')
         print(encoded + '(' + str(len(encoded)) + ')')
         app_status['latest_tweet'] = encoded
@@ -152,7 +152,15 @@ def produce_next_tweet(app_status, query=''):
 
 if __name__ == "__main__":
     print("Started")
-    process_replies()
-    if random.randrange(100) < twitter_settings.tweet_chance:
-        produce_next_tweet(status, twitter_settings.search_key)
+    # First, try to authenticate
+    client = twitter.auth_client(settings.consumer_key,
+                                 settings.consumer_secret,
+                                 settings.token_key,
+                                 settings.token_secret)
+
+    if client:
+        process_replies(client)
+        if random.randrange(100) < settings.tweet_chance:
+            produce_next_tweet(client, status, settings.search_key)
+
     print("Finished")

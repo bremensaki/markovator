@@ -1,5 +1,5 @@
 *.pyc
 *~
+settings.py
 twitter_settings.py
 status.json
-.idea

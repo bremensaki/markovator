@@ -1,10 +1,8 @@
-# Fill in the blanks below and rename this file twitter_settings.py
-
-import oauth2 as oauth
-
 screen_name='' # Twitter username
-token = oauth.Token(key="", secret="") # Twitter users token and secret
-consumer = oauth.Consumer(key="", secret="") # Key and secret of the twitter appliction
+token_key = '' # from https://apps.twitter.com/
+token_secret = '' # from https://apps.twitter.com/
+consumer_key = '' # from https://apps.twitter.com/
+consumer_secret = '' # from https://apps.twitter.com/
 tweet_chance = 20 # % chance of generating a tweet on any run, set "100" for easy testing
 search_key = "#markov" # search term used to obtain source tweets
 # Debug Helpers
