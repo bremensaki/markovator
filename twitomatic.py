@@ -74,7 +74,7 @@ def reply_to_user(client, user, app_status):
     if best_tweet is not None:
         tweet = tweet_prefix + best_tweet
         if settings.post_replies:
-            twitter.post_tweet(client, best_tweet)
+            twitter.post_tweet(client, tweet)
         encoded = unicode(tweet).encode('utf-8')
         print(encoded + '(' + str(len(encoded)) + ')')
         app_status['latest_reply'] = encoded
