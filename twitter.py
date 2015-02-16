@@ -98,9 +98,12 @@ def get_timeline_tweets_since(client, since_id=-1):
     return tweets
 
 
-def post_tweet(client, text):
+def post_tweet(client, text, reply_to_id=-1):
+    # TODO only include reply_to_id if replying
     resp, content = client.request("https://api.twitter.com/1.1/statuses/update.json", "POST",
-                                   urllib.urlencode([("status", unicode(text).encode('utf-8'))]))
+            urllib.urlencode([("status", unicode(text).encode('utf-8')),
+                              ("in_reply_to_status_id", unicode(reply_to_id).encode('utf-8')),
+                              ]))
 
     # TODO Check status code
 

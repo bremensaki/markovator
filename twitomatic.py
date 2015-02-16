@@ -47,7 +47,7 @@ def filter_out_bad_words(tweets):
                                  'RIP' in t['text']), tweets)
 
 
-def reply_to_user(client, user, app_status):
+def reply_to_user(client, user, tweet_id, app_status):
     if user['protected']:
         print("@" + user['screen_name'] + " if your tweets weren't protected I'd be able to say something constructive")
         return
@@ -74,7 +74,7 @@ def reply_to_user(client, user, app_status):
     if best_tweet is not None:
         tweet = tweet_prefix + best_tweet
         if settings.post_replies:
-            twitter.post_tweet(client, tweet)
+            twitter.post_tweet(client, tweet, reply_to_id=tweet_id)
         encoded = unicode(tweet).encode('utf-8')
         print(encoded + '(' + str(len(encoded)) + ')')
         app_status['latest_reply'] = encoded
@@ -97,7 +97,7 @@ def process_replies(client):
     mentions.reverse()
     for mention in mentions:
         twitter.follow_user(client, mentions[-1]['user']['screen_name'])
-        reply_to_user(client, mention['user'], app_status)
+        reply_to_user(client, mention['user'], mention['id'], app_status)
 
         app_status['reply_since_id'] = mention['id']
         app_status['latest_user_replied_to'] = mention['user']['screen_name']
@@ -159,6 +159,7 @@ if __name__ == "__main__":
                                  settings.token_secret)
 
     if client:
+        #TODO move reply processing loop here
         process_replies(client)
         if random.randrange(100) < settings.tweet_chance:
             produce_next_tweet(client, status, settings.search_key)
